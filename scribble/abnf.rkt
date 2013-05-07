@@ -4,7 +4,7 @@
          racket/list
          scribble/manual
          scribble/struct
-	 (only-in scribble/core style)
+	 (only-in scribble/core style make-style make-table-columns)
          scribble/decode)
 (require (for-syntax racket/base))
 
@@ -12,6 +12,8 @@
          term BNF-var
          ABNF attr-decl attr-sel node-var attr-label
          optional BNF-group kleenestar kleeneplus kleenerange)
+
+(define baseline (make-style #f '(baseline)))
 
 (define spacer (element 'hspace (list " ")))
 (define equals (element 'tt (list spacer "::=" spacer)))
@@ -31,17 +33,21 @@
 (define (column lhs op rhs)
   (list (as-flow spacer) (as-flow lhs) (as-flow op) (as-flow rhs)))
 
-(define (BNF . defns)
-  (table
-   (style #f empty)
-   (apply
-    append
-    (for/list ([defn defns])
-      (match defn
-        [(list A p1 ps ...)
-         (cons (column A equals p1)
-               (for/list ([p ps])
-                 (column " " alt p)))])))))
+  (define (BNF . defns)
+    (make-table
+     (make-style #f
+                 (list
+                  (make-table-columns
+                   (list baseline baseline baseline baseline))))
+     (apply
+      append
+      (map (lambda (defn)
+             (cons
+              (list (as-flow spacer) (as-flow (car defn)) (as-flow equals) (as-flow (cadr defn)))
+              (map (lambda (i)
+                     (list (as-flow spacer) (as-flow " ") (as-flow alt) (as-flow i)))
+                   (cddr defn))))
+           defns))))
 
 (define (ABNF . defns)
   (table
